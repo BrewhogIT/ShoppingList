@@ -4,17 +4,18 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.shoppinglist.domain.ShopItem
 import com.example.shoppinglist.domain.ShopListRepository
+import kotlin.random.Random
 
 object ShopListRepositoryImp : ShopListRepository {
-    private val _shopList = mutableListOf<ShopItem>()
+    private val shopList = sortedSetOf<ShopItem>({ o1, o2 -> o1.id.compareTo(o2.id)})
+    private val shopListLD = MutableLiveData<List<ShopItem>>()
+
     private var autoIncrementId = 0
-    private val shopList = MutableLiveData<List<ShopItem>>()
 
     init {
-        for (i in 0 .. 10){
-            val item = ShopItem("Name $i", i, true)
-            _shopList.add(item)
-            shopList.value = _shopList
+        for (i in 0 .. 100){
+            val item = ShopItem("Name $i", i, Random.nextBoolean())
+            addShopItem(item)
         }
     }
 
@@ -23,12 +24,12 @@ object ShopListRepositoryImp : ShopListRepository {
             item.id = autoIncrementId++
         }
 
-        _shopList.add(item)
+        shopList.add(item)
         updateList()
     }
 
     override fun deleteShopItem(item: ShopItem) {
-        _shopList.remove(item)
+        shopList.remove(item)
         updateList()
     }
 
@@ -39,14 +40,14 @@ object ShopListRepositoryImp : ShopListRepository {
     }
 
     override fun getShopItem(id: Int): ShopItem {
-        return _shopList.find { it.id == id } ?: throw RuntimeException("Wrong id ()  $id ")
+        return shopList.find { it.id == id } ?: throw RuntimeException("Wrong id ()  $id ")
     }
 
     override fun getShopList(): LiveData<List<ShopItem>> {
-        return shopList
+        return shopListLD
     }
 
     fun updateList(){
-        shopList.value = _shopList.toList()
+        shopListLD.value = shopList.toList()
     }
 }
